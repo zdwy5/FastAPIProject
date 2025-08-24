@@ -203,11 +203,39 @@ class AppScheduleTask(SQLModel, table=True):
         sa_column_kwargs={"comment": "附件,对应上传文件ID或url"}
     )
 
+    involved_persons: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="涉及人，多个用户ID用逗号分隔",
+        sa_column_kwargs={"comment": "涉及人，多个用户ID用逗号分隔"}
+    )
+
+    watchers: Optional[str] = Field(
+        default=None,
+        max_length=500,
+        description="关注人，多个用户ID用逗号分隔",
+        sa_column_kwargs={"comment": "关注人，多个用户ID用逗号分隔"}
+    )
+
+    task_description: Optional[str] = Field(
+        default=None,
+        sa_type=Text,
+        description="任务描述",
+        sa_column_kwargs={"comment": "任务描述"}
+    )
+
+    group_id: Optional[int] = Field(
+        default=None,
+        max_length=12,
+        description="分组",
+        sa_column_kwargs={"comment": "分组, 12"}
+    )
+
     # 定义索引
     class Config:
         indexes = [
             Index("idx_user", "user_id"),
             Index("idx_type", "type"),
             Index("idx_create_time", "create_time"),
-            Index("idx_status", "status")
+            Index("idx_group", "group_id")
         ]

@@ -75,3 +75,47 @@ CREATE TABLE `code` (
   KEY `idx_parent_code` (`parent_code`),
   KEY `idx_type` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='编码表';
+
+
+-- stone_ai_db.ai_command definition
+
+CREATE TABLE `ai_command` (
+  `id` bigint NOT NULL COMMENT '雪花ID',
+  `command_code` varchar(64) NOT NULL COMMENT '指令编码',
+  `command_name` varchar(128) NOT NULL COMMENT '指令名称',
+  `category_id` bigint DEFAULT NULL COMMENT '指令分类ID',
+  `trigger_keywords` varchar(255) NOT NULL COMMENT '指令触发的关键词',
+  `handler_type` varchar(32) NOT NULL COMMENT '处理器类型: CLASS/METHOD/URL',
+  `handler_target` varchar(255) NOT NULL COMMENT '处理器目标(类名/方法/URL)',
+  `command_params` json DEFAULT NULL COMMENT '指令参数配置，JSON格式',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `status` tinyint NOT NULL DEFAULT '1' COMMENT '状态：0-禁用，1-启用',
+  `priority` int DEFAULT '50' COMMENT '优先级(1-100)，值越大优先级越高',
+  `creator` varchar(64) NOT NULL COMMENT '创建人',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_status` (`status`),
+  KEY `idx_category` (`category_id`),
+  KEY `idx_priority` (`priority`),
+  KEY `uk_command_code` (`command_code`) USING BTREE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='AI指令管理表';
+
+-- stone_ai_db.ai_command_category definition
+
+CREATE TABLE `ai_command_category` (
+  `id` bigint NOT NULL COMMENT '分类ID',
+  `category_name` varchar(64) NOT NULL COMMENT '分类名称',
+  `category_code` varchar(32) NOT NULL COMMENT '分类编码',
+  `parent_id` bigint DEFAULT NULL COMMENT '父分类ID',
+  `sort_order` int DEFAULT '0' COMMENT '排序序号',
+  `status` tinyint DEFAULT '1' COMMENT '状态：0-禁用，1-启用',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `creator` varchar(64) NOT NULL COMMENT '创建人',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_category_code` (`category_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='AI指令分类表';
+
+
