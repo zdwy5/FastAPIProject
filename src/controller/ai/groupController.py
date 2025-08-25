@@ -17,7 +17,7 @@ router = APIRouter(prefix="/app/groups", tags=["分组管理"])
 class GroupCreate(BaseModel):
     name: str = Field(..., description="分组名称")
     creator_id: str = Field(..., description="创建者用户ID")
-    parent_id: Optional[int] = Field(None, description="父分组ID，顶级分组为NULL")
+    parent_id: Optional[int] = Field(None, description="父分组ID，顶级分组为NULL，不传或传null表示顶级分组")
     level: int = Field(1, description="分组层级，1级为顶级分组")
 
 class GroupUpdate(BaseModel):
@@ -67,7 +67,17 @@ async def create_group(
         # 自动创建用户分组关系（如果不存在）
         userGroupDao.create_user_group_if_not_exists(db, group_create.creator_id, created_group.id)
         
-        return HttpResponse.success(GroupResponse(**created_group.model_dump()))
+        # 手动构建响应数据，避免model_dump的问题
+        response_data = {
+            'id': created_group.id,
+            'name': created_group.name,
+            'parent_id': created_group.parent_id,
+            'level': created_group.level,
+            'created_at': created_group.created_at,
+            'updated_at': created_group.updated_at
+        }
+        
+        return HttpResponse.success(GroupResponse(**response_data))
     except Exception as e:
         return HttpResponse.error(msg=str(e))
 
