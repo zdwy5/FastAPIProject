@@ -18,6 +18,13 @@ class DifyYpj(DifyModel):
     inputs: DifyYpjInputs
 
 
+class DifyYpjReport(BaseModel):
+    """
+    仅用于易拍居报告的轻量入参模型：只传 houses_id
+    """
+    houses_id: str = Field(..., description="房屋ID", example="11287")
+
+
 #  历史遗留产物 👇
 class DifyJxm(BaseModel):
     """Dify Jxm VO对象"""

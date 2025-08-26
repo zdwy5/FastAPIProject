@@ -2,12 +2,13 @@ import logging
 import json
 import random
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel, Field
 from sqlmodel import Session
 from src.common.enum.codeEnum import CodeEnum
 from src.dao.userProfileDao import get_profile_by_user_id
 from src.db.db import get_db, engine
 from src.exception.aiException import AIException
-from src.pojo.vo.difyParamVo import DifyJxm, DifyYpj
+from src.pojo.vo.difyParamVo import DifyJxm, DifyYpj, DifyYpjReport
 from src.service.difyService import normal_dify_flow
 from fastapi.responses import StreamingResponse
 import asyncio
@@ -32,6 +33,23 @@ async def chatflow_ypj(param: DifyYpj,  db: Session = Depends(get_db)):
     api_code = CodeEnum.YPJ_API_CODE.value
     ypj_param = param.model_dump()
     return await normal_dify_flow(api_code=api_code,user_id=param.user,dify_param=ypj_param,db=db)
+
+@router.post("/chatflow-ypj/report")
+async def ypj_report(param: DifyYpjReport, db: Session = Depends(get_db)):
+    """
+    生成 YPJ 报告（非流式），仅需 houses_id
+    - user 使用 houses_id 作为会话关联键（或后续可换成真实 user）
+    - response_mode 固定 blocking
+    """
+    api_code = CodeEnum.YPJ_REPORT_API_CODE.value
+    dify_param = {
+        "inputs": {"houses_id": param.houses_id},
+        "query": "开始生成报告",
+        "response_mode": "blocking",
+        "conversation_id": "",
+        "user": param.houses_id,
+    }
+    return await normal_dify_flow(api_code=api_code, user_id=dify_param["user"], dify_param=dify_param, db=db)
 
 @router.get("/info/{user}")
 async def get_info(user: str, db: Session = Depends(get_db)):
