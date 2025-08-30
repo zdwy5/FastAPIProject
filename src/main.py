@@ -28,7 +28,7 @@ from starlette.staticfiles import StaticFiles
 
 
 # 初始化数据库表
-create_tables()
+# create_tables()
 
 app = FastAPI(docs_url=None, redoc_url=None)  # 禁用默认的 docs 和 redoc
 

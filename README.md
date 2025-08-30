@@ -26,7 +26,8 @@ username: bme6rczl
 password: d2ad722f
 
 服务器mysql数据库连接信息：
-1.12.43.211  3306 root /a3f5c8e1d7b90246
+1.12.43.211  3306 root/a3f5c8e1d7b90246  old
+1.12.43.211  3306 stone_ai_db/3dpjTc8ss6JWPtyd  new  20250830
 
 Dify访问路径：
 http://1.12.43.211/apps
