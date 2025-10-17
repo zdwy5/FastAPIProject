@@ -38,5 +38,12 @@ class ERPSaveOrder(BaseModel):
     user_id: str = Field(..., description="用户ID", example="123")
     result: str = Field(..., description="最终保存返回结果", example="{}")
 
+class ERPSelectOrder(BaseModel):
+    user_id: str = Field(..., description="用户ID", example="123")
+    dialog_carrier: str = Field(..., description="对话承载人", example="Tony")
+
+class ERPSellerSaleInfoAnalysis(NormalLLMRequestModel):
+    sale_data: str = Field(..., description="销售情况数据", example='''[{"category_id":96120,"category_name":"集成电路","total_amount":210000,"order_count":3},{"category_id":95967,"category_name":"中央处理器","total_amount":1600,"order_count":10}]''')
+
 class ERPSellerSaleInfoAnalysis(NormalLLMRequestModel):
     sale_data: str = Field(..., description="销售情况数据", example='''[{"category_id":96120,"category_name":"集成电路","total_amount":210000,"order_count":3},{"category_id":95967,"category_name":"中央处理器","total_amount":1600,"order_count":10}]''')

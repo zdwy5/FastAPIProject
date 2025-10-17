@@ -87,9 +87,24 @@ async def erp_user_sale_info(data: dict, session: Session):
     api_info = get_info_by_api_code(session,CodeEnum.ERP_USER_SALE_INFO_API_CODE.value)
     response = await form_data_post(api_info.api_url, form_data=data, headers={"token": data['token']})
     erp_response_check(response)
-    if isinstance(response['data'],list):
-        return response['data']
-    return list(response['data'].values())
+    # lcl 结果返回结果调整
+    return response['data']
+    # if isinstance(response['data'],list):
+    #     return response['data']
+    # return list(response['data'].values())
+
+async def erp_detect_order_type(data: dict, session: Session):
+    """
+    订单类型分析
+    :param data:
+    :param session:
+    :return:
+    """
+    api_info = get_info_by_api_code(session,CodeEnum.DETECT_ORDER_TYPE_API_CODE.value)
+    response = await form_data_post(api_info.api_url, form_data=data, headers={"token": data['token']})
+    erp_response_check(response)
+    # lcl 结果返回结果调整
+    return response['data']
 
 async def erp_inventory_detail_search(data: dict, session: Session):
     """

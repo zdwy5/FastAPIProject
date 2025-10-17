@@ -16,7 +16,8 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
         path = request.url.path
 
         # 只记录特定路径的请求体
-        if path in os.getenv("WATCHING_API_URL"):
+        watching_urls = os.getenv("WATCHING_API_URL", "")
+        if path in watching_urls:
             # 读取原始请求体
             body = await request.body()
             # 记录原始请求体

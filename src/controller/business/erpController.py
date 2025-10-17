@@ -7,9 +7,9 @@ from sqlmodel import Session
 from starlette.responses import StreamingResponse
 from src.ai.aiService import sse_event_generator, easy_json_structure_extraction
 from src.common.enum.codeEnum import CodeEnum
-from src.dao.sessionDetailDao import create_session_detail, search_session_details_by_user_id, update_session_detail
+from src.dao.sessionDetailDao import create_session_detail, search_session_details_by_user_id, update_session_detail, search_session_details_by_user_id_dialog_carrier
 from src.pojo.bo.erpBo import SQLQuery, ERPOrderSearch, ERPInventoryDetailSearch, ERPInventoryDetailAnalysis, \
-    ERPSellerSaleInfo, ERPUserSaleInfo, ERPSellerSaleInfoAnalysis, ERPSaveOrder
+    ERPSellerSaleInfo, ERPUserSaleInfo, ERPSellerSaleInfoAnalysis, ERPSaveOrder, ERPSelectOrder
 from src.db.db import get_db
 from src.myHttp.bo.httpResponse import HttpResponse
 from src.pojo.bo.aiBo import GetJsonModel
@@ -17,9 +17,10 @@ from src.pojo.po.sessionDetailPo import SessionDetail
 from src.pojo.vo.difyResponse import DifyResponse
 from src.pojo.vo.erpVo import PipoFile
 from src.service.aiCodeService import get_code_value_by_code
-from src.service.erpService import erp_execute_sql, erp_generate_popi, erp_order_search, \
+from src.service.erpService import erp_detect_order_type, erp_execute_sql, erp_generate_popi, erp_order_search, \
      erp_user_sale_info, inventory_analysis, erp_seller_sale_info_analysis, \
-    erp_generate_pi, erp_order_search_without_check, erp_inventory_detail_search
+    erp_generate_pi, erp_order_search_without_check, erp_inventory_detail_search, \
+        erp_detect_order_type
 from src.utils.dataUtils import translate_dict_keys_4_list, is_valid_json
 
 router = APIRouter(prefix="/erp", tags=["ERP 相关"])
@@ -123,3 +124,21 @@ async def save_order_info(params: ERPSaveOrder, db: Session = Depends(get_db)):
         return HttpResponse.error("未查询到对应的创建订单对话")
     update_session_detail(session=db,detail_id=result.id,update_data={'final_response': params.result})
     return HttpResponse.success(result.id)
+
+@router.post("/select_order_history")
+async def select_order_info(params: ERPSelectOrder, db: Session = Depends(get_db)):
+    # session_details = search_session_details_by_user_id_dialog_carrier(session=db,user_id=params.user_id, dialog_carrier=params.dialog_carrier, limit=100)
+    session_details = search_session_details_by_user_id(session=db,user_id=params.user_id, search_params={'dialog_carrier': params.dialog_carrier}, limit=100)
+    if not session_details:
+        return HttpResponse.error(f"未查询到对应{params.user_id}的订单对话")
+    return HttpResponse.success(session_details)
+
+
+@router.post("/dify/detect_order_type")
+async def detect_order_type(params: dict, db: Session = Depends(get_db)):
+    result = await erp_detect_order_type(params, db)
+    return HttpResponse.success(result)
+    # return HttpResponse.success(result)
+    
+    result = await erp_user_sale_info({**json.loads(json_data), "token": data.token}, db)
+    return HttpResponse.success(result)
