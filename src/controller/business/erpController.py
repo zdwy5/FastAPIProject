@@ -7,9 +7,10 @@ from sqlmodel import Session
 from starlette.responses import StreamingResponse
 from src.ai.aiService import sse_event_generator, easy_json_structure_extraction
 from src.common.enum.codeEnum import CodeEnum
-from src.dao.sessionDetailDao import create_session_detail, search_session_details_by_user_id, update_session_detail, search_session_details_by_user_id_dialog_carrier
+from src.dao.sessionDetailDao import create_session_detail, search_session_details_by_user_id, update_session_detail
 from src.pojo.bo.erpBo import SQLQuery, ERPOrderSearch, ERPInventoryDetailSearch, ERPInventoryDetailAnalysis, \
-    ERPSellerSaleInfo, ERPUserSaleInfo, ERPSellerSaleInfoAnalysis, ERPSaveOrder, ERPSelectOrder
+    ERPSellerSaleInfo, ERPUserSaleInfo, ERPSellerSaleInfoAnalysis, ERPSaveOrder, ERPSelectOrder, ERPUserHouseQuery, \
+    ERPSelectOrderWithPagination
 from src.db.db import get_db
 from src.myHttp.bo.httpResponse import HttpResponse
 from src.pojo.bo.aiBo import GetJsonModel
@@ -20,7 +21,7 @@ from src.service.aiCodeService import get_code_value_by_code
 from src.service.erpService import erp_detect_order_type, erp_execute_sql, erp_generate_popi, erp_order_search, \
      erp_user_sale_info, inventory_analysis, erp_seller_sale_info_analysis, \
     erp_generate_pi, erp_order_search_without_check, erp_inventory_detail_search, \
-        erp_detect_order_type
+        erp_detect_order_type, get_user_house_combinations, get_order_history_with_pagination
 from src.utils.dataUtils import translate_dict_keys_4_list, is_valid_json
 
 router = APIRouter(prefix="/erp", tags=["ERP 相关"])
@@ -128,10 +129,45 @@ async def save_order_info(params: ERPSaveOrder, db: Session = Depends(get_db)):
 @router.post("/select_order_history")
 async def select_order_info(params: ERPSelectOrder, db: Session = Depends(get_db)):
     # session_details = search_session_details_by_user_id_dialog_carrier(session=db,user_id=params.user_id, dialog_carrier=params.dialog_carrier, limit=100)
-    session_details = search_session_details_by_user_id(session=db,user_id=params.user_id, search_params={'dialog_carrier': params.dialog_carrier}, limit=100)
+    search_params = {
+        'dialog_carrier': params.dialog_carrier
+    }
+    session_details = search_session_details_by_user_id(session=db,user_id=params.user_id, search_params=search_params)
     if not session_details:
         return HttpResponse.error(f"未查询到对应{params.user_id}的订单对话")
     return HttpResponse.success(session_details)
+
+@router.post("/select_order_history_with_pagination")
+async def select_order_info_with_pagination(params: ERPSelectOrderWithPagination, db: Session = Depends(get_db)):
+    """
+    获取订单历史记录（带分页）
+    
+    Args:
+        params: 查询参数，包含user_id、dialog_carrier、house_id、page、pagesize
+        db: 数据库会话
+        
+    Returns:
+        包含分页信息的订单历史数据
+    """
+    try:
+        page = int(params.page)
+        pagesize = int(params.pagesize)
+        
+        result = await get_order_history_with_pagination(
+            user_id=params.user_id,
+            dialog_carrier=params.dialog_carrier,
+            house_id=params.house_id,
+            page=page,
+            pagesize=pagesize,
+            session=db
+        )
+        
+        return HttpResponse.success(result)
+    except ValueError as e:
+        return HttpResponse.error(f"参数错误: {str(e)}")
+    except Exception as e:
+        logger.error(f"获取订单历史记录失败: {str(e)}")
+        return HttpResponse.error(f"获取订单历史记录失败: {str(e)}")
 
 
 @router.post("/dify/detect_order_type")
@@ -142,3 +178,33 @@ async def detect_order_type(params: dict, db: Session = Depends(get_db)):
     
     result = await erp_user_sale_info({**json.loads(json_data), "token": data.token}, db)
     return HttpResponse.success(result)
+
+@router.post("/user_house_combinations")
+async def get_user_house_combinations_api(params: ERPUserHouseQuery, db: Session = Depends(get_db)):
+    """
+    获取所有用户和房源的组合信息
+    
+    Args:
+        params: 查询参数，包含dialog_carrier、page、pagesize
+        db: 数据库会话
+        
+    Returns:
+        用户和房源组合的列表
+    """
+    try:
+        page = int(params.page)
+        pagesize = int(params.pagesize)
+        
+        result = await get_user_house_combinations(
+            dialog_carrier=params.dialog_carrier,
+            page=page,
+            pagesize=pagesize,
+            session=db
+        )
+        
+        return HttpResponse.success(result)
+    except ValueError as e:
+        return HttpResponse.error(f"参数错误: {str(e)}")
+    except Exception as e:
+        logger.error(f"获取用户房源组合信息失败: {str(e)}")
+        return HttpResponse.error(f"获取用户房源组合信息失败: {str(e)}")

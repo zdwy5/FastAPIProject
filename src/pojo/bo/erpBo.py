@@ -40,10 +40,22 @@ class ERPSaveOrder(BaseModel):
 
 class ERPSelectOrder(BaseModel):
     user_id: str = Field(..., description="用户ID", example="123")
-    dialog_carrier: str = Field(..., description="对话承载人", example="Tony")
+    # house_id: str = Field(..., description="房源ID", example="123456")
+    # page: str = Field("1", description="页码（默认1，从1开始）", example="1")
+    # pagesize: str = Field("10", description="每页条数（默认10，如10/20/50）", example="10")
+    dialog_carrier: str = Field(..., description="对话承载人", example="dify_ypj")
+
+class ERPSelectOrderWithPagination(BaseModel):
+    user_id: str = Field(..., description="用户ID", example="123")
+    house_id: str = Field(None, description="房源ID", example="123456")
+    page: str = Field("1", description="页码（默认1，从1开始）", example="1")
+    pagesize: str = Field("10", description="每页条数（默认10，如10/20/50）", example="10")
+    dialog_carrier: str = Field(..., description="对话承载人", example="dify_ypj")
 
 class ERPSellerSaleInfoAnalysis(NormalLLMRequestModel):
     sale_data: str = Field(..., description="销售情况数据", example='''[{"category_id":96120,"category_name":"集成电路","total_amount":210000,"order_count":3},{"category_id":95967,"category_name":"中央处理器","total_amount":1600,"order_count":10}]''')
 
-class ERPSellerSaleInfoAnalysis(NormalLLMRequestModel):
-    sale_data: str = Field(..., description="销售情况数据", example='''[{"category_id":96120,"category_name":"集成电路","total_amount":210000,"order_count":3},{"category_id":95967,"category_name":"中央处理器","total_amount":1600,"order_count":10}]''')
+class ERPUserHouseQuery(BaseModel):
+    dialog_carrier: str = Field(..., description="对话承载人", example="dify_ypj")
+    page: str = Field("1", description="页码（默认1，从1开始）", example="1")
+    pagesize: str = Field("10", description="每页条数（默认10，如10/20/50）", example="10")

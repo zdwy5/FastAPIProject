@@ -137,6 +137,7 @@ async def erp_inventory_detail_search_by_cn(data: dict, session: Session):
 
 
 
+
 def get_data_from_erp_page_response(response):
     """
     从erp的分页查询结果中只取数据
@@ -188,3 +189,107 @@ async def erp_seller_sale_info_analysis(llm_params: NormalLLMRequestModel,sale_d
                                             PromptContent.as_user(llm_params.query),
                                             PromptContent.as_assistant(sale_data)]
     return await do_api_2_llm(llm_params)
+
+async def get_user_house_combinations(dialog_carrier: str, page: int, pagesize: int, session: Session):
+    """
+    获取所有用户和房源的组合信息（带分页信息）
+    
+    Args:
+        dialog_carrier: 对话承载人
+        page: 页码（从1开始）
+        pagesize: 每页条数
+        session: 数据库会话
+        
+    Returns:
+        包含分页信息的用户和房源组合数据
+    """
+    from src.dao.sessionDetailDao import get_user_house_combinations, get_user_house_combinations_count
+    
+    try:
+        # 获取数据
+        data = get_user_house_combinations(session, dialog_carrier, page, pagesize)
+        
+        # 获取总数
+        total_count = get_user_house_combinations_count(session, dialog_carrier)
+        
+        # 返回包含分页信息的结果
+        return {
+            "data": data,
+            "total": total_count,
+            "page": page,
+            "pagesize": pagesize
+        }
+    except Exception as e:
+        logger.error(f"获取用户房源组合信息失败: {str(e)}")
+        raise AIException(f"获取用户房源组合信息失败: {str(e)}")
+
+async def get_user_house_combinations_with_pagination(dialog_carrier: str, page: int, pagesize: int, session: Session):
+    """
+    获取所有用户和房源的组合信息（带分页信息）
+    
+    Args:
+        dialog_carrier: 对话承载人
+        page: 页码（从1开始）
+        pagesize: 每页条数
+        session: 数据库会话
+        
+    Returns:
+        包含分页信息的用户和房源组合数据
+    """
+    from src.dao.sessionDetailDao import get_user_house_combinations, get_user_house_combinations_count
+    
+    try:
+        # 获取数据
+        data = get_user_house_combinations(session, dialog_carrier, page, pagesize)
+        
+        # 获取总数
+        total_count = get_user_house_combinations_count(session, dialog_carrier)
+        
+        # 计算分页信息
+        total_pages = (total_count + pagesize - 1) // pagesize
+        
+        return {
+            "data": data,
+            "pagination": {
+                "page": page,
+                "pagesize": pagesize,
+                "total_count": total_count,
+                "total_pages": total_pages,
+                "has_next": page < total_pages,
+                "has_prev": page > 1
+            }
+        }
+    except Exception as e:
+        logger.error(f"获取用户房源组合信息失败: {str(e)}")
+        raise AIException(f"获取用户房源组合信息失败: {str(e)}")
+
+async def get_order_history_with_pagination(user_id: str, dialog_carrier: str, house_id: str = None, page: int = 1, pagesize: int = 10, session: Session = None):
+    """
+    获取订单历史记录（带分页）
+    
+    Args:
+        user_id: 用户ID
+        dialog_carrier: 对话承载人
+        house_id: 房源ID（可选）
+        page: 页码（从1开始）
+        pagesize: 每页条数
+        session: 数据库会话
+        
+    Returns:
+        包含分页信息的订单历史数据
+    """
+    from src.dao.sessionDetailDao import search_session_details_by_user_house_with_pagination
+    
+    try:
+        result = search_session_details_by_user_house_with_pagination(
+            session=session,
+            user_id=user_id,
+            dialog_carrier=dialog_carrier,
+            house_id=house_id,
+            page=page,
+            pagesize=pagesize
+        )
+        return result
+    except Exception as e:
+        logger.error(f"获取订单历史记录失败: {str(e)}")
+        raise AIException(f"获取订单历史记录失败: {str(e)}")
