@@ -270,7 +270,7 @@ def get_user_house_combinations(session: Session, dialog_carrier: str, page: int
                  AND JSON_EXTRACT(sd2.api_input, '$.inputs.houses_id') = JSON_EXTRACT(sd.api_input, '$.inputs.houses_id')
                  ORDER BY sd2.create_time DESC 
                  LIMIT 1) as latest_question,
-                (SELECT final_response 
+                (SELECT api_output 
                  FROM session_detail sd3 
                  WHERE sd3.dialog_carrier = :dialog_carrier 
                  AND JSON_EXTRACT(sd3.api_input, '$.user') = JSON_EXTRACT(sd.api_input, '$.user')
