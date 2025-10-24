@@ -9,7 +9,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     TZ=Asia/Shanghai
 
-# 安装系统依赖和时区配置
+# 安装系统依赖和时区配置（这一层会被缓存）
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         gcc \
@@ -23,11 +23,13 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装Python依赖
+# 先复制requirements.txt（这一层会被缓存，除非requirements.txt变化）
 COPY requirements.txt .
+
+# 安装Python依赖（这一层会被缓存，除非requirements.txt变化）
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 复制项目文件
+# 最后复制项目文件（只有代码变化时才会重新构建这一层）
 COPY . .
 
 # 暴露端口

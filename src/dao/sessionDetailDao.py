@@ -231,7 +231,7 @@ def count_session_details(session: Session, session_id: str) -> int:
 def get_user_house_combinations(session: Session, dialog_carrier: str, page: int = 1, pagesize: int = 10) -> List[Dict[str, Any]]:
     """
     获取所有用户和房源的组合信息，通过session_detail表的dialog_carrier字段过滤，
-    然后从api_input字段中提取user和houses_id信息进行分组
+    然后从api_input字段中提取user和houses_id信息进行分组，包含统计信息
     
     Args:
         session: 数据库会话
@@ -240,7 +240,7 @@ def get_user_house_combinations(session: Session, dialog_carrier: str, page: int
         pagesize: 每页条数
         
     Returns:
-        用户和房源组合的列表
+        用户和房源组合的列表，包含统计信息
     """
     from sqlalchemy import text
     import json
@@ -248,16 +248,42 @@ def get_user_house_combinations(session: Session, dialog_carrier: str, page: int
     # 计算偏移量
     offset = (page - 1) * pagesize
     
-    # 使用原生SQL查询，因为需要解析JSON字段
+    # 使用原生SQL查询，获取用户房源组合及其统计信息
     sql = text("""
-        SELECT DISTINCT 
-            JSON_EXTRACT(api_input, '$.user') as user,
-            JSON_EXTRACT(api_input, '$.inputs.houses_id') as houses_id
-        FROM session_detail 
-        WHERE dialog_carrier LIKE :dialog_carrier 
-        AND JSON_EXTRACT(api_input, '$.user') IS NOT NULL 
-        AND JSON_EXTRACT(api_input, '$.inputs.houses_id') IS NOT NULL
-        ORDER BY user, houses_id
+        SELECT 
+            user_key,
+            houses_id_key,
+            total_count,
+            latest_time,
+            latest_question,
+            latest_response
+        FROM (
+            SELECT 
+                JSON_EXTRACT(api_input, '$.user') as user_key,
+                JSON_EXTRACT(api_input, '$.inputs.houses_id') as houses_id_key,
+                COUNT(*) as total_count,
+                MAX(create_time) as latest_time,
+                (SELECT user_question 
+                 FROM session_detail sd2 
+                 WHERE sd2.dialog_carrier LIKE :dialog_carrier 
+                 AND JSON_EXTRACT(sd2.api_input, '$.user') = JSON_EXTRACT(sd.api_input, '$.user')
+                 AND JSON_EXTRACT(sd2.api_input, '$.inputs.houses_id') = JSON_EXTRACT(sd.api_input, '$.inputs.houses_id')
+                 ORDER BY sd2.create_time DESC 
+                 LIMIT 1) as latest_question,
+                (SELECT final_response 
+                 FROM session_detail sd3 
+                 WHERE sd3.dialog_carrier LIKE :dialog_carrier 
+                 AND JSON_EXTRACT(sd3.api_input, '$.user') = JSON_EXTRACT(sd.api_input, '$.user')
+                 AND JSON_EXTRACT(sd3.api_input, '$.inputs.houses_id') = JSON_EXTRACT(sd.api_input, '$.inputs.houses_id')
+                 ORDER BY sd3.create_time DESC 
+                 LIMIT 1) as latest_response
+            FROM session_detail sd
+            WHERE dialog_carrier LIKE :dialog_carrier 
+            AND JSON_EXTRACT(api_input, '$.user') IS NOT NULL 
+            AND JSON_EXTRACT(api_input, '$.inputs.houses_id') IS NOT NULL
+            GROUP BY JSON_EXTRACT(api_input, '$.user'), JSON_EXTRACT(api_input, '$.inputs.houses_id')
+        ) as grouped_data
+        ORDER BY user_key, houses_id_key
         LIMIT :pagesize OFFSET :offset
     """)
     
@@ -270,12 +296,21 @@ def get_user_house_combinations(session: Session, dialog_carrier: str, page: int
     # 转换结果为字典列表
     combinations = []
     for row in result:
-        user = row[0]
-        houses_id = row[1]
-        if user and houses_id:
+        user_key = row[0]
+        houses_id_key = row[1]
+        total_count = row[2]
+        latest_time = row[3]
+        latest_question = row[4]
+        latest_response = row[5]
+        
+        if user_key and houses_id_key:
             combinations.append({
-                "user": user.strip('"'),  # 去掉JSON字符串的引号
-                "houses_id": int(houses_id) if houses_id.isdigit() else houses_id.strip('"')
+                "user": user_key.strip('"'),  # 去掉JSON字符串的引号
+                "houses_id": int(houses_id_key) if houses_id_key.isdigit() else houses_id_key.strip('"'),
+                "total_count": total_count,
+                "latest_time": latest_time.isoformat() if latest_time else None,
+                "latest_question": latest_question,
+                "latest_response": latest_response
             })
     
     return combinations
@@ -371,13 +406,13 @@ def search_session_details_by_user_house_with_pagination(session: Session, user_
         session_detail = {
             "id": row[0],
             "session_id": row[1],
-            "api_input": row[2],
-            "user_question": row[3],
-            "ai_response": row[4],
-            "final_response": row[5],
-            "dialog_carrier": row[6],
-            "create_time": row[7],
-            "update_time": row[8]
+            "dialog_carrier": row[2],
+            "api_input": row[3],
+            "api_output": row[4],
+            "user_question": row[5],
+            "final_response": row[6],
+            "create_time": row[-2].isoformat() if row[-2] else None,
+            "update_time": row[-1].isoformat() if row[-1] else None,
         }
         session_details.append(session_detail)
     

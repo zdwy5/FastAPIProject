@@ -221,7 +221,7 @@ async def get_user_house_combinations(dialog_carrier: str, page: int, pagesize: 
         }
     except Exception as e:
         logger.error(f"获取用户房源组合信息失败: {str(e)}")
-        raise AIException(f"获取用户房源组合信息失败: {str(e)}")
+        raise AIException(500, f"获取用户房源组合信息失败: {str(e)}")
 
 async def get_user_house_combinations_with_pagination(dialog_carrier: str, page: int, pagesize: int, session: Session):
     """
@@ -261,7 +261,7 @@ async def get_user_house_combinations_with_pagination(dialog_carrier: str, page:
         }
     except Exception as e:
         logger.error(f"获取用户房源组合信息失败: {str(e)}")
-        raise AIException(f"获取用户房源组合信息失败: {str(e)}")
+        raise AIException(500, f"获取用户房源组合信息失败: {str(e)}")
 
 async def get_order_history_with_pagination(user_id: str, dialog_carrier: str, house_id: str = None, page: int = 1, pagesize: int = 10, session: Session = None):
     """
@@ -292,4 +292,4 @@ async def get_order_history_with_pagination(user_id: str, dialog_carrier: str, h
         return result
     except Exception as e:
         logger.error(f"获取订单历史记录失败: {str(e)}")
-        raise AIException(f"获取订单历史记录失败: {str(e)}")
+        raise AIException(500, f"获取订单历史记录失败: {str(e)}")
