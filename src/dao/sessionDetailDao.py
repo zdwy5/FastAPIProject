@@ -265,20 +265,20 @@ def get_user_house_combinations(session: Session, dialog_carrier: str, page: int
                 MAX(create_time) as latest_time,
                 (SELECT user_question 
                  FROM session_detail sd2 
-                 WHERE sd2.dialog_carrier LIKE :dialog_carrier 
+                 WHERE sd2.dialog_carrier = :dialog_carrier 
                  AND JSON_EXTRACT(sd2.api_input, '$.user') = JSON_EXTRACT(sd.api_input, '$.user')
                  AND JSON_EXTRACT(sd2.api_input, '$.inputs.houses_id') = JSON_EXTRACT(sd.api_input, '$.inputs.houses_id')
                  ORDER BY sd2.create_time DESC 
                  LIMIT 1) as latest_question,
                 (SELECT final_response 
                  FROM session_detail sd3 
-                 WHERE sd3.dialog_carrier LIKE :dialog_carrier 
+                 WHERE sd3.dialog_carrier = :dialog_carrier 
                  AND JSON_EXTRACT(sd3.api_input, '$.user') = JSON_EXTRACT(sd.api_input, '$.user')
                  AND JSON_EXTRACT(sd3.api_input, '$.inputs.houses_id') = JSON_EXTRACT(sd.api_input, '$.inputs.houses_id')
                  ORDER BY sd3.create_time DESC 
                  LIMIT 1) as latest_response
             FROM session_detail sd
-            WHERE dialog_carrier LIKE :dialog_carrier 
+            WHERE dialog_carrier = :dialog_carrier 
             AND JSON_EXTRACT(api_input, '$.user') IS NOT NULL 
             AND JSON_EXTRACT(api_input, '$.inputs.houses_id') IS NOT NULL
             GROUP BY JSON_EXTRACT(api_input, '$.user'), JSON_EXTRACT(api_input, '$.inputs.houses_id')
@@ -288,7 +288,7 @@ def get_user_house_combinations(session: Session, dialog_carrier: str, page: int
     """)
     
     result = session.execute(sql, {
-        'dialog_carrier': f'%{dialog_carrier}%',
+        'dialog_carrier': dialog_carrier,
         'pagesize': pagesize,
         'offset': offset
     }).fetchall()
@@ -335,13 +335,13 @@ def get_user_house_combinations_count(session: Session, dialog_carrier: str) -> 
             JSON_EXTRACT(api_input, '$.inputs.houses_id')
         )) as total_count
         FROM session_detail 
-        WHERE dialog_carrier LIKE :dialog_carrier 
+        WHERE dialog_carrier = :dialog_carrier 
         AND JSON_EXTRACT(api_input, '$.user') IS NOT NULL 
         AND JSON_EXTRACT(api_input, '$.inputs.houses_id') IS NOT NULL
     """)
     
     result = session.execute(sql, {
-        'dialog_carrier': f'%{dialog_carrier}%'
+        'dialog_carrier': dialog_carrier
     }).fetchone()
     
     return result[0] if result else 0
