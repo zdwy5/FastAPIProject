@@ -26,7 +26,7 @@ class ERPInventoryDetailAnalysis(ERPInventoryDetailSearch,ModelConfig):
         return ERPInventoryDetailSearch(**self.model_dump())
 
 class ERPUserSaleInfo(TokenModel,Query):
-    pass
+    nickname: str = Field(..., description="用户昵称", example="123")
 
 class ERPSellerSaleInfo(TokenModel):
     seller_name: str = Field(..., description="销售名称", example="Tony")

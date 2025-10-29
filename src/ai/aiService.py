@@ -69,27 +69,33 @@ async def sse_event_generator(response):
 
 
 
-async def normal_json_structure_extraction(query: str,model: str,structure: str):
+async def normal_json_structure_extraction(query: str,model: str,structure: str, nickname: str = None):
     """
     通用JSON结构提取
     :param query: 用户输入
     :param model: 调用模型
     :param structure: JSON结构信息
+    :param nickname: 用户昵称
     :return: LLM提取到的结果
     """
     with Session(engine) as db:
         prompt_text = get_code_value_by_code(session=db, code_value=CodeEnum.JSON_STRUCTURE_EXTRACTION_PROMPT_CODE.value)
         date_info = get_now_4_prompt()
         prompt_template = Template(prompt_text)
-        prompt = prompt_template.substitute(struct=structure,date_info=date_info)
+        if not nickname:
+            nickname = "未知"
+        prompt = prompt_template.substitute(struct=structure,date_info=date_info,nickname=nickname)
         messages = [PromptContent.as_system(prompt), PromptContent.as_user(query)]
         result = await do_api_2_llm(ModelConfig(model=model, messages=messages, stream=False))
         return result
 
-async def easy_json_structure_extraction(params :GetJsonModel):
+async def easy_json_structure_extraction(params :GetJsonModel, nickname: str = None):
     with Session(engine) as db:
         struct = api_info_2_struct_str(session=db, api_code=params.api_code)
-        return await normal_json_structure_extraction(params.query, params.model, struct)
+        if nickname:
+            return await normal_json_structure_extraction(params.query, params.model, struct, nickname)
+        else:
+            return await normal_json_structure_extraction(params.query, params.model, struct)
 
 
 async def get_time_range(query: str,model: str):

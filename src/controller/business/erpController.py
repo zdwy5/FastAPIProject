@@ -98,7 +98,7 @@ async def seller_sale_info(data: ERPSellerSaleInfo, db: Session = Depends(get_db
 @router.post("/dify/seller_sale_info")
 async def dify_seller_sale_info(data: ERPUserSaleInfo, db: Session = Depends(get_db)):
     param = GetJsonModel(query=data.query,model="deepseek-chat",api_code=CodeEnum.ERP_USER_SALE_INFO_API_CODE.value)
-    json_data = await easy_json_structure_extraction(param)
+    json_data = await easy_json_structure_extraction(param, data.nickname)
     result = await erp_user_sale_info({**json.loads(json_data), "token": data.token}, db)
     return HttpResponse.success(result)
 
