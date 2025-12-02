@@ -119,8 +119,9 @@ async def save_order_info(params: ERPSaveOrder, db: Session = Depends(get_db)):
     x for x in session_details
     if is_valid_json(x.final_response)
     and isinstance(json.loads(x.final_response), list)
-    and 'order-form' in json.loads(x.final_response)[0]['type']
+    and ('order-form' in json.loads(x.final_response)[0]['type'] or 'quotation' in json.loads(x.final_response)[0]['type'])
     ),None)
+
     if not result:
         return HttpResponse.error("未查询到对应的创建订单对话")
     update_session_detail(session=db,detail_id=result.id,update_data={'final_response': params.result})
