@@ -50,7 +50,11 @@ async def erp_generate_pi(data: dict, session: Session):
     :return:
     """
     api_info = get_info_by_api_code(session,CodeEnum.ERP_GEN_PI_API_CODE.value)
-    response = await form_data_post(api_info.api_url, form_data=data, headers=data)
+    # response = await form_data_post(api_info.api_url, form_data=data, headers=data)
+    headers = {
+        "token": data.get("token")
+    }
+    response = await normal_post(api_info.api_url, data=data, headers=headers)
     erp_response_check(response)
     if "msg" in response and response['msg'] != "success":
         return response['msg']
