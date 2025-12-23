@@ -38,7 +38,11 @@ async def erp_generate_popi(data: dict, session: Session):
     :return:
     """
     api_info = get_info_by_api_code(session,CodeEnum.ERP_GEN_POPI_API_CODE.value)
-    response = await post_with_query_params(api_info.api_url, params=data, headers=data)
+    # response = await post_with_query_params(api_info.api_url, params=data, headers=data)
+    headers = {
+        "token": data.get("token")
+    }
+    response = await normal_post(api_info.api_url, data=data, headers=headers)
     erp_response_check(response)
     return response['data']
 
